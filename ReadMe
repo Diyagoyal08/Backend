@@ -1,0 +1,322 @@
+# Session 1 — Node.js & Express Notes
+> Topics covered: Raw Node HTTP server · Express routing · Middleware · POST requests · Data validation · JSON responses
+
+---
+
+## 1. What is Node.js?
+
+Node.js is **JavaScript that runs on your computer/server — not in the browser.**
+
+It takes the same V8 engine Chrome uses and puts it on your machine so you can run JS anywhere.
+
+| Browser JS | Node.js |
+|---|---|
+| ❌ Read/write files | ✅ Read/write files |
+| ❌ Access database | ✅ Access database |
+| ❌ Hide secret keys | ✅ Keep API keys secret |
+| ❌ Be a server | ✅ BE the server |
+
+---
+
+## 2. require vs import
+
+```js
+// React style (modern ES6)
+import express from 'express'
+
+// Node style (CommonJS - older but very common)
+const express = require('express')
+```
+
+Same idea — both bring a module into your file. `require` is Node's older way.
+
+**Built-in modules** (no install needed): `fs`, `path`, `http`, `os`
+**npm packages** (need to install): `express`, `axios`, `mongoose`
+
+Think of it like a phone:
+- Built-in modules = apps that come with your phone (camera, calculator)
+- npm packages = apps you download from Play Store
+
+---
+
+## 3. The File System Module (fs)
+
+```js
+const fs = require('fs')
+
+// Create/write a file
+fs.writeFileSync('hello.txt', 'Hello from Node.js!')
+
+// Read a file
+const data = fs.readFileSync('hello.txt', 'utf8')
+console.log(data)
+```
+
+Your JavaScript can now **create real files on your computer** — this is not possible in the browser.
+
+---
+
+## 4. Raw HTTP Server (Node without Express)
+
+```js
+const http = require('http')
+
+const server = http.createServer((req, res) => {
+  if (req.url === '/') {
+    res.write("Welcome home!")
+  } else if (req.url === '/about') {
+    res.write("This is the about page")
+  } else {
+    res.write("Page not found")
+  }
+  res.end()
+})
+
+server.listen(3000, () => {
+  console.log("Server running on port 3000")
+})
+```
+
+Key concepts:
+- `req.url` — which path the user visited (`/`, `/about` etc.)
+- `req.method` — what type of request (GET, POST etc.)
+- `res.write()` — write a response
+- `res.end()` — finish the response
+- `server.listen(3000)` — start the server on port 3000
+
+**localhost** = this machine itself (not the internet)
+**Port 3000** = like a flat number in an apartment building — multiple servers on same machine use different ports
+
+---
+
+## 5. Why Express?
+
+Raw Node routing with if/else becomes a nightmare for real apps:
+
+```js
+// Raw Node — gets messy fast 😬
+if (req.url === '/') { ... }
+else if (req.url === '/about') { ... }
+else if (req.url === '/contact') { ... }
+// imagine 50 more routes...
+```
+
+Express makes this clean, readable, and powerful.
+
+---
+
+## 6. Express Basics
+
+### Setup
+```bash
+npm init -y
+npm install express
+```
+
+### Basic server
+```js
+const express = require('express')
+const app = express()
+
+app.get('/', (req, res) => {
+  res.send("Hello from Express!")
+})
+
+app.listen(3000, () => {
+  console.log("Express server running on port 3000")
+})
+```
+
+### res.send() vs res.json()
+```js
+res.send("Hello")           // plain text
+res.json({ name: "Rahul" }) // JSON — used for APIs
+```
+
+### HTTP Methods
+```
+GET    → fetch/read data    → app.get()
+POST   → send/submit data   → app.post()
+PUT    → update data        → app.put()
+DELETE → delete data        → app.delete()
+```
+
+---
+
+## 7. Middleware
+
+Middleware is code that runs **before every request reaches your route** — like a security guard at a mall entrance.
+
+```js
+app.use((req, res, next) => {
+  console.log(req.method, req.url, new Date())
+  next() // MUST call next() or request freezes forever!
+})
+```
+
+Key rules:
+- `app.use()` must be placed **above** your routes
+- Always call `next()` when done — otherwise the request hangs
+- Runs for **every** request automatically
+
+**Real world uses of middleware:**
+- Logging (what we built)
+- Authentication checks (is user logged in?)
+- Parsing request body (express.json())
+- Error handling
+
+### Logger middleware we built
+```js
+app.use((req, res, next) => {
+  console.log(req.method, req.url, new Date())
+  next()
+})
+```
+
+---
+
+## 8. POST Requests & req.body
+
+To receive data from frontend (forms, React apps etc.):
+
+```js
+// MUST add this middleware to read JSON body
+app.use(express.json())
+
+app.post('/register', (req, res) => {
+  console.log(req.body) // { name: "Rahul", email: "rahul@gmail.com" }
+  res.json({ message: "User registered!" })
+})
+```
+
+Without `app.use(express.json())`, `req.body` will be `undefined`!
+
+---
+
+## 9. Data Validation
+
+Always validate data before saving to database:
+
+```js
+app.post('/register', (req, res) => {
+  if (!req.body.name || !req.body.email) {
+    return res.json({ message: "Name and email are required!" })
+  }
+  res.json({ message: "User registered!", user: req.body })
+})
+```
+
+---
+
+## 10. HTTP Status Codes
+
+```
+200 → OK (success)
+201 → Created (something was saved)
+400 → Bad request (user sent wrong data)
+404 → Not found
+500 → Server error
+```
+
+Usage (coming next session):
+```js
+res.status(400).json({ error: "Name and email are required" })
+res.status(201).json({ message: "User registered!" })
+```
+
+---
+
+## 11. JS Concepts Revised
+
+### Async/Await & Event Loop
+```js
+async function getUser() {
+  console.log("A")
+  const data = await fetch("https://api.example.com/user")
+  console.log("B")
+}
+
+getUser()
+console.log("C")
+
+// Output: A → C → B
+// await pauses that function but doesn't block everything else
+```
+
+### Higher Order Functions
+A function that takes another function as an argument (or returns one).
+
+```js
+// All of these are higher order functions:
+[1,2,3].map(num => num * 2)
+setTimeout(() => console.log("hi"), 1000)
+app.use((req, res, next) => {})
+```
+
+Middleware in Express is a perfect example of a higher order function — `app.use()` takes your function and calls it on every request.
+
+---
+
+## 12. Full server.js so far
+
+```js
+const express = require('express')
+const app = express()
+
+// Middleware
+app.use(express.json())
+
+app.use((req, res, next) => {
+  console.log(req.method, req.url, new Date())
+  next()
+})
+
+// Routes
+app.get('/', (req, res) => {
+  res.send("Hello from Express!")
+})
+
+app.get('/about', (req, res) => {
+  res.send("Hello from about")
+})
+
+app.get('/contact', (req, res) => {
+  res.send("Hello from contact")
+})
+
+app.get('/user', (req, res) => {
+  res.json({ name: "Diya", age: 20, city: "Jaipur" })
+})
+
+app.get('/users', (req, res) => {
+  res.json([
+    { id: 1, name: "ab" },
+    { id: 2, name: "cd" }
+  ])
+})
+
+app.post('/register', (req, res) => {
+  if (!req.body.name || !req.body.email) {
+    return res.json({ message: "Name and email are required!" })
+  }
+  res.json({ message: "User registered!" })
+})
+
+app.listen(3000, () => {
+  console.log("Express server running on port 3000")
+})
+```
+
+---
+
+## What's Next (Session 2)
+
+- HTTP status codes in practice
+- Express Router (organizing routes in separate files)
+- Error handling middleware
+- REST API best practices
+- Connecting to MongoDB database
+
+---
+
+*Keep this file safe — we'll build on it every session! 💪*
