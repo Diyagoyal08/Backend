@@ -8,8 +8,11 @@ router.get('/', (req, res) => {
   ])
 })
 
-router.get('/:id', (req, res) => {
-  res.json({ userId: req.params.id })
-})
+
+router.get('/search', (req, res) => {
+  console.log(req.query)
+  res.json(req.query)
+}) 
+
 
 module.exports = router

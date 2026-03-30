@@ -1,3 +1,9 @@
+require('dotenv').config()
+const mongoose = require('mongoose')
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected!"))
+  .catch((err) => console.log("Connection failed:", err))
 const express = require ('express')
 const app = express()
 const users = require('./routes/users')
