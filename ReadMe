@@ -320,3 +320,12 @@ app.listen(3000, () => {
 ---
 
 *Keep this file safe — we'll build on it every session! 💪*
+
+
+In real APIs:
+```
+200 → OK (success)
+201 → Created (something was saved)
+400 → Bad request (user sent wrong data)
+404 → Not found
+500 → Server error
