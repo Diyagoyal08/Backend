@@ -2,7 +2,27 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User.js')
 
+
+const bcrypt = require('bcrypt')
  
+
+
+router.post('/', async (req, res) => { // save user
+  const hashedPassword = await bcrypt.hash(req.body.password, 10)
+
+  try {
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword 
+    })
+    
+    await user.save()
+    res.status(201).json({ message: "User saved!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
 
 router.get('/', async (req, res) => { // find user
   try {
@@ -38,21 +58,7 @@ router.put('/:id' , async (req, res) => { // update user
 
 
 
-
-
-router.post('/', async (req, res) => { // save user
-  try {
-    const user = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password
-    })
-    await user.save()
-    res.status(201).json({ message: "User saved!", user })
-  } catch (err) {
-    res.status(400).json({ error: err.message })
-  }
-})
+ 
 
 
 
