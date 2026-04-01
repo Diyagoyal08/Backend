@@ -1,5 +1,5 @@
-# Node.js & Express — Complete Notes (Session 1 + 2)
-> Topics covered: Raw Node · Express · Middleware · Router · REST API · MongoDB · Mongoose
+ # Node.js, Express & MongoDB — Complete Notes (Sessions 1, 2 & 3)
+> Topics covered: Raw Node · Express · Middleware · Router · REST API · MongoDB · Mongoose · CRUD · bcrypt
 
 ---
 
@@ -28,14 +28,8 @@ import express from 'express'
 const express = require('express')
 ```
 
-Same idea — both bring a module into your file.
-
 **Built-in modules** (no install needed): `fs`, `path`, `http`, `os`
 **npm packages** (need to install): `express`, `axios`, `mongoose`
-
-Think of it like a phone:
-- Built-in modules = apps that come with your phone (camera, calculator)
-- npm packages = apps you download from Play Store
 
 ---
 
@@ -51,8 +45,6 @@ fs.writeFileSync('hello.txt', 'Hello from Node.js!')
 const data = fs.readFileSync('hello.txt', 'utf8')
 console.log(data)
 ```
-
-Your JavaScript can now **create real files on your computer** — not possible in the browser.
 
 ---
 
@@ -78,30 +70,19 @@ server.listen(3000, () => {
 ```
 
 Key concepts:
-- `req.url` — which path the user visited (`/`, `/about` etc.)
-- `req.method` — what type of request (GET, POST etc.)
+- `req.url` — which path the user visited
+- `req.method` — type of request (GET, POST etc.)
 - `res.write()` — write a response
 - `res.end()` — finish the response
-- `server.listen(3000)` — start the server on port 3000
 
 **localhost** = this machine itself (not the internet)
-**Port 3000** = like a flat number in an apartment building — multiple servers on same machine use different ports
+**Port 3000** = like a flat number in an apartment building
 
 ---
 
 ## 5. Why Express?
 
-Raw Node routing with if/else becomes a nightmare for real apps:
-
-```js
-// Raw Node — gets messy fast 😬
-if (req.url === '/') { ... }
-else if (req.url === '/about') { ... }
-else if (req.url === '/contact') { ... }
-// imagine 50 more routes...
-```
-
-Express makes this clean, readable, and powerful.
+Raw Node routing with if/else becomes a nightmare for real apps. Express makes it clean, readable, and powerful.
 
 ---
 
@@ -145,13 +126,12 @@ DELETE → delete data        → app.delete()
 
 ## 7. HTTP Status Codes
 
-Always send the correct status code with your response:
-
 ```js
-res.status(400).json({ error: "Bad request" })   // user sent wrong data
-res.status(201).json({ message: "Created!" })     // something was saved
-res.status(404).json({ error: "Not found" })      // route doesn't exist
-res.status(500).json({ error: "Server error" })   // something broke
+res.status(200).json({ message: "OK" })
+res.status(201).json({ message: "Created!" })
+res.status(400).json({ error: "Bad request" })
+res.status(404).json({ error: "Not found" })
+res.status(500).json({ error: "Server error" })
 ```
 
 ```
@@ -166,7 +146,7 @@ res.status(500).json({ error: "Server error" })   // something broke
 
 ## 8. Middleware
 
-Middleware is code that runs **before every request reaches your route** — like a security guard at a mall entrance.
+Middleware runs **before every request reaches your route** — like a security guard at a mall entrance.
 
 ```js
 app.use((req, res, next) => {
@@ -176,29 +156,19 @@ app.use((req, res, next) => {
 ```
 
 Key rules:
-- `app.use()` must be placed **above** your routes
-- Always call `next()` — otherwise the request hangs forever
+- Must be placed **above** your routes
+- Always call `next()` — otherwise request hangs forever
 - Runs for **every** request automatically
 
-**Real world uses of middleware:**
-- Logging (what we built)
-- Authentication checks (is user logged in?)
-- Parsing request body (`express.json()`)
+**Real world uses:**
+- Logging
+- Authentication checks
+- Parsing request body
 - Error handling
 
-### Logger middleware we built
+### app.use() is a Higher Order Function
 ```js
-app.use((req, res, next) => {
-  console.log(req.method, req.url, new Date())
-  next()
-})
-```
-
-### Higher Order Functions & Middleware
-`app.use()` is a higher order function — it takes another function as an argument.
-
-```js
-// All of these are higher order functions:
+// All of these take a function as argument = higher order functions
 [1,2,3].map(num => num * 2)
 setTimeout(() => console.log("hi"), 1000)
 app.use((req, res, next) => {})
@@ -208,10 +178,8 @@ app.use((req, res, next) => {})
 
 ## 9. POST Requests & req.body
 
-To receive data from frontend (forms, React apps etc.):
-
 ```js
-// MUST add this middleware to read JSON body
+// MUST add this to read JSON body
 app.use(express.json())
 
 app.post('/register', (req, res) => {
@@ -226,8 +194,6 @@ Without `app.use(express.json())`, `req.body` will be `undefined`!
 
 ## 10. Data Validation
 
-Always validate data before saving to database:
-
 ```js
 app.post('/register', (req, res) => {
   if (!req.body.name || !req.body.email) {
@@ -240,8 +206,6 @@ app.post('/register', (req, res) => {
 ---
 
 ## 11. Express Router (Organized Routes)
-
-Split routes into separate files instead of putting everything in `server.js`.
 
 **Folder structure:**
 ```
@@ -262,35 +226,26 @@ const express = require('express')
 const router = express.Router()
 
 router.get('/', (req, res) => {
-  res.json([
-    { id: 1, name: "ab" },
-    { id: 2, name: "cd" }
-  ])
+  res.json([{ id: 1, name: "ab" }])
 })
 
-router.get('/:id', (req, res) => {
-  res.json({ userId: req.params.id })
-})
-
-module.exports = router   // export (like export default in React)
+module.exports = router   // like export default in React
 ```
 
 **server.js:**
 ```js
-const usersRouter = require('./routes/users')  // import
+const usersRouter = require('./routes/users')
 app.use('/users', usersRouter)
-// Now every route in users.js automatically starts with /users
+// every route in users.js now starts with /users
 ```
 
 ---
 
 ## 12. nodemon (Auto Restart)
 
-No more manually restarting the server on every change!
-
 ```bash
 npm install -g nodemon
-nodemon server.js    // instead of node server.js
+nodemon server.js
 ```
 
 Type `rs` in terminal to manually restart anytime.
@@ -298,8 +253,6 @@ Type `rs` in terminal to manually restart anytime.
 ---
 
 ## 13. Error Handling Middleware
-
-Two special middleware blocks that go **after** all your routes:
 
 ```js
 // Error handler — 4 parameters (err is extra)
@@ -313,11 +266,21 @@ app.use((req, res) => {
 })
 ```
 
-To trigger the error handler from inside a route:
+Trigger error handler from a route:
 ```js
 app.get('/crash', (req, res, next) => {
   next(new Error("Something broke!"))
 })
+```
+
+**Middleware order in server.js:**
+```
+1. express.json()
+2. Logger middleware
+3. Routes
+4. Error handler (err, req, res, next)
+5. 404 handler
+6. app.listen()
 ```
 
 ---
@@ -327,20 +290,18 @@ app.get('/crash', (req, res, next) => {
 ### Route Parameters — for fetching a specific item
 ```js
 router.get('/:id', (req, res) => {
-  const id = req.params.id
-  res.json({ userId: id })
+  res.json({ userId: req.params.id })
 })
+// /users/123 → req.params.id = "123"
 ```
-Visit `/users/123` → `req.params.id` = `"123"`
 
 ### Query Strings — for filtering/searching
 ```js
 router.get('/search', (req, res) => {
-  console.log(req.query)
   res.json(req.query)
 })
+// /users/search?city=jaipur&age=20 → req.query = { city: "jaipur", age: "20" }
 ```
-Visit `/users/search?city=jaipur&age=20` → `req.query` = `{ city: "jaipur", age: "20" }`
 
 ### Route Order Matters ⚠️
 ```js
@@ -372,9 +333,9 @@ Submit signup form     → POST /register       → req.body
 
 ---
 
-## 16. Environment Variables (.env)
+## 16. Environment Variables (.env) 🔐
 
-**Never hardcode secrets in your code!**
+**Never hardcode secrets in your code or share them anywhere!**
 
 ```bash
 npm install dotenv
@@ -382,7 +343,7 @@ npm install dotenv
 
 **.env file:**
 ```
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGO_URI=mongodb+srv://username:YOUR_PASSWORD@cluster.mongodb.net/myapp?appName=appName
 PORT=3000
 ```
 
@@ -396,10 +357,16 @@ node_modules
 ```js
 require('dotenv').config()
 
-// Access anywhere in your app:
+// Access anywhere:
 process.env.MONGO_URI
 process.env.PORT
 ```
+
+**Security rules:**
+- Never share your `.env` file
+- Never commit `.env` to GitHub
+- Never paste real credentials in notes or chat
+- Always use placeholders like `YOUR_PASSWORD` in notes
 
 ---
 
@@ -452,12 +419,12 @@ const mongoose = require('mongoose')
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true       // mandatory field
+    required: true
   },
   email: {
     type: String,
     required: true,
-    unique: true         // no two users with same email (like primary key)
+    unique: true
   },
   password: {
     type: String,
@@ -469,14 +436,116 @@ const User = mongoose.model('User', userSchema)
 module.exports = User
 ```
 
-- **Schema** → defines the shape/structure of your data
+- **Schema** → defines the shape/structure of data
 - **Model** → tool to interact with database (save, find, delete)
 - `required: true` → field is mandatory
-- `unique: true` → no duplicates allowed
+- `unique: true` → no duplicates allowed (like primary key in SQL)
 
 ---
 
-## 20. JS Concepts Revised
+## 20. Full CRUD Operations
+
+### Create (POST)
+```js
+router.post('/', async (req, res) => {
+  try {
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password
+    })
+    await user.save()
+    res.status(201).json({ message: "User saved!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+```
+
+### Read (GET)
+```js
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find()
+    res.json(users)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+```
+
+### Update (PUT)
+```js
+router.put('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }  // returns updated document, not old one
+    )
+    res.json({ message: "User updated!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+```
+
+### Delete (DELETE)
+```js
+router.delete('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id)
+    res.json({ message: "User deleted!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+```
+
+---
+
+## 21. Password Hashing with bcrypt 🔐
+
+**Never store plain text passwords!**
+
+```bash
+npm install bcrypt
+```
+
+```js
+const bcrypt = require('bcrypt')
+
+// When saving a user — hash the password first
+router.post('/', async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    // 10 = salt rounds (complexity of hashing)
+
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword  // save hash, not plain text!
+    })
+    await user.save()
+    res.status(201).json({ message: "User saved!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+```
+
+**How hashing works:**
+```
+Register: "123456" → bcrypt.hash() → "$2b$10$9Y94..." (saved in DB)
+Login:    "123456" → bcrypt.hash() → compared with stored hash
+                                      match = login success ✅
+```
+
+You can never reverse `"$2b$10$9Y94..."` back to `"123456"` — that's what makes it safe!
+
+---
+
+## 22. JS Concepts Revised
 
 ### Async/Await & Event Loop
 ```js
@@ -490,20 +559,19 @@ getUser()
 console.log("C")
 
 // Output: A → C → B
-// await pauses that function but doesn't block everything else
 ```
 
 ### Higher Order Functions
 A function that takes another function as an argument.
 ```js
-[1,2,3].map(num => num * 2)         // map is a HOF
-setTimeout(() => {}, 1000)          // setTimeout is a HOF
-app.use((req, res, next) => {})     // app.use is a HOF
+[1,2,3].map(num => num * 2)
+setTimeout(() => console.log("hi"), 1000)
+app.use((req, res, next) => {})
 ```
 
 ---
 
-## 21. Complete server.js
+## 23. Complete server.js
 
 ```js
 require('dotenv').config()
@@ -534,14 +602,7 @@ app.get('/', (req, res) => {
   res.send("Hello from Express!")
 })
 
-app.post('/register', (req, res) => {
-  if (!req.body.name || !req.body.email) {
-    return res.status(400).json({ error: "Name and email are required!" })
-  }
-  res.status(201).json({ message: "User registered!" })
-})
-
-// Error handler (4 params)
+// Error handler
 app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message })
 })
@@ -558,13 +619,77 @@ app.listen(process.env.PORT, () => {
 
 ---
 
-## What's Next (Session 3)
+## 24. Complete routes/users.js
 
-- Save user to MongoDB from `/register` route
-- Full CRUD operations (Create, Read, Update, Delete)
-- Find all users, find by ID, update, delete
-- Complete Users API connected to real database
-- Start Authentication (JWT + bcrypt)
+```js
+const express = require('express')
+const router = express.Router()
+const User = require('../models/User.js')
+const bcrypt = require('bcrypt')
+
+// GET all users
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find()
+    res.json(users)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// GET search users
+router.get('/search', (req, res) => {
+  console.log(req.query)
+  res.json(req.query)
+})
+
+// GET specific user
+router.get('/:id', (req, res) => {
+  res.json({ userId: req.params.id })
+})
+
+// POST create user
+router.post('/', async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword
+    })
+    await user.save()
+    res.status(201).json({ message: "User saved!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// PUT update user
+router.put('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    )
+    res.json({ message: "User updated!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+// DELETE user
+router.delete('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id)
+    res.json({ message: "User deleted!", user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+module.exports = router
+```
 
 ---
 
@@ -586,16 +711,31 @@ app.listen(process.env.PORT, () => {
 ✅ MongoDB Atlas setup
 ✅ Mongoose connection
 ✅ User Schema & Model
-⏳ CRUD with MongoDB
-⏳ Authentication (JWT)
+✅ Full CRUD (Create, Read, Update, Delete)
+✅ Password hashing with bcrypt
+⏳ Authentication (JWT + login route)
+⏳ Protected routes (auth middleware)
 ⏳ Full-stack with React
 ⏳ Deployment
 ```
 
 ---
 
-*You're halfway to full-stack — keep going! 💪*
+## What's Next (Session 4)
 
+- Login route (compare password with bcrypt)
+- JWT tokens (what they are and how they work)
+- Auth middleware (protecting routes)
+- Only logged in users can access certain routes
 
+---
 
-ctrl+shift+v
+## 🔐 Security Reminders
+- Never store plain text passwords — always hash with bcrypt
+- Never hardcode secrets — always use .env
+- Never commit .env to GitHub — add it to .gitignore
+- Never share real credentials in notes or chat — use placeholders
+
+---
+
+*You're more than halfway to full-stack — keep going! 💪*
