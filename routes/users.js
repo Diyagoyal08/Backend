@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const User = require('../models/User.js')
-
+const authMiddleware = require('../middleware/authMiddleware')
 
 const bcrypt = require('bcrypt')
  
@@ -24,7 +24,7 @@ router.post('/', async (req, res) => { // save user
   }
 })
 
-router.get('/', async (req, res) => { // find user
+router.get('/',authMiddleware ,async (req, res) => { // find user
   try {
     const users = await User.find()
     res.json(users)
