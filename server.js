@@ -1,19 +1,21 @@
-require('dotenv').config()
+ require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
+const cors = require('cors')  // 👈 import at top with others
 const app = express()
-
-// Routes imports
-const users = require('./routes/users')
-const products = require('./routes/products')
-const auth = require('./routes/auth')
 
 // Connect MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected!"))
   .catch((err) => console.log("Connection failed:", err))
 
+// Routes imports
+const users = require('./routes/users')
+const products = require('./routes/products')
+const auth = require('./routes/auth')
+
 // Middleware
+app.use(cors({ origin: 'http://localhost:5173' }))  // 👈 first!
 app.use(express.json())
 app.use((req, res, next) => {
   console.log(req.method, req.url, new Date())
@@ -23,7 +25,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/users', users)
 app.use('/products', products)
-app.use('/auth', auth) // 👈 you had 'auth' without the /
+app.use('/auth', auth)
 
 // Error handler
 app.use((err, req, res, next) => {
