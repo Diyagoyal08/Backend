@@ -307,20 +307,6 @@ app.listen(3000, () => {
 })
 ```
 
----
-
-## What's Next (Session 2)
-
-- HTTP status codes in practice
-- Express Router (organizing routes in separate files)
-- Error handling middleware
-- REST API best practices
-- Connecting to MongoDB database
-
----
-
-*Keep this file safe — we'll build on it every session! 💪*
-
 
 In real APIs:
 ```
