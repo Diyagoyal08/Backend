@@ -20,7 +20,7 @@ It takes the same V8 engine Chrome uses and puts it on your machine so you can r
 
 ## 2. require vs import
 
-```js
+ 
 // React style (modern ES6)
 import express from 'express'
 
@@ -173,7 +173,7 @@ app.use((req, res, next) => {
 })
 ```
 
----
+ 
 
 ## 8. POST Requests & req.body
 
