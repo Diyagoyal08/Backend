@@ -2,20 +2,20 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useContext } from 'react'
 import AuthContext from '../context/AuthContext'
-import { loginUser } from '../api/authApi'
-import LoginForm from '../components/auth/LoginForm'
+import { registerUser } from '../api/authApi'
+import RegisterForm from '../components/auth/RegisterForm'
 
-function LoginPage() {
+function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
 
-  const handleSubmit = (credentials) => {
+  const handleSubmit = (registrationData) => {
     setLoading(true)
     setError('')
 
-    loginUser(credentials)
+    registerUser(registrationData)
       .then((response) => {
         const token = response.data?.token
         if (!token) {
@@ -25,7 +25,7 @@ function LoginPage() {
         navigate('/dashboard')
       })
       .catch((err) => {
-        setError(err.response?.data?.error || 'Unable to log in. Please try again.')
+        setError(err.response?.data?.error || 'Unable to register. Please try again.')
       })
       .finally(() => setLoading(false))
   }
@@ -34,16 +34,18 @@ function LoginPage() {
     <section className="container">
       <div className="page-header">
         <div>
-          <h1>Login</h1>
-          <p className="text-muted">Enter your credentials to manage content and publish new posts.</p>
+          <h1>Create an account</h1>
+          <p className="text-muted">Register to write posts, manage your dashboard, and publish content.</p>
         </div>
       </div>
-      <LoginForm onSubmit={handleSubmit} loading={loading} error={error} />
+
+      <RegisterForm onSubmit={handleSubmit} loading={loading} error={error} />
+
       <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-        Don't have an account? <Link to="/register">Register here</Link>
+        Already have an account? <Link to="/login">Login here</Link>
       </p>
     </section>
   )
 }
 
-export default LoginPage
+export default RegisterPage

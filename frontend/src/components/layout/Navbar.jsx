@@ -31,9 +31,14 @@ function Navbar() {
               Logout
             </button>
           ) : (
-            <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/login">
-              Login
-            </NavLink>
+            <>
+              <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/register">
+                Register
+              </NavLink>
+              <NavLink className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} to="/login">
+                Login
+              </NavLink>
+            </>
           )}
         </nav>
       </div>

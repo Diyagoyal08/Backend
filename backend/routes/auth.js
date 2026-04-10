@@ -25,13 +25,34 @@ const jwt = require('jsonwebtoken')
     // Step 5 - create JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
 
-    res.json({ message: "Login successful!", token })
+    res.json({ message: 'Login successful!', token })
 
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
 })
 
+router.post('/register', async (req, res) => {
+  try {
+    const existingUser = await User.findOne({ email: req.body.email })
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered.' })
+    }
 
+    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    const user = new User({
+      name: req.body.name || req.body.email.split('@')[0],
+      email: req.body.email,
+      password: hashedPassword,
+    })
+
+    await user.save()
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+    res.status(201).json({ message: 'Registration successful!', token })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
 
 module.exports = router
