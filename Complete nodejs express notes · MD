@@ -224,12 +224,20 @@ backend/
 ```js
 const express = require('express')
 const router = express.Router()
+const authMiddleware = require('../middleware/authMiddleware')
+const {
+  getAllUsers,
+  saveusers,
+  updateUser,
+  deleteUser,
+} = require('../controllers/userController')
 
-router.get('/', (req, res) => {
-  res.json([{ id: 1, name: "ab" }])
-})
+router.get('/', authMiddleware, getAllUsers)
+router.post('/', saveusers)
+router.put('/:id', updateUser)
+router.delete('/:id', deleteUser)
 
-module.exports = router   // like export default in React
+module.exports = router
 ```
 
 **server.js:**
@@ -345,6 +353,7 @@ npm install dotenv
 ```
 MONGO_URI=mongodb+srv://username:YOUR_PASSWORD@cluster.mongodb.net/myapp?appName=appName
 PORT=3000
+JWT_SECRET=YOUR_JWT_SECRET
 ```
 
 **.gitignore (never commit secrets to GitHub!):**
@@ -403,7 +412,10 @@ npm install mongoose
 require('dotenv').config()
 const mongoose = require('mongoose')
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
   .then(() => console.log("MongoDB connected!"))
   .catch((err) => console.log("Connection failed:", err))
 ```
@@ -577,29 +589,39 @@ app.use((req, res, next) => {})
 require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
+const cors = require('cors')
 const app = express()
-const usersRouter = require('./routes/users')
-const productsRouter = require('./routes/products')
 
 // Connect MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected!"))
-  .catch((err) => console.log("Connection failed:", err))
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('MongoDB connected!'))
+  .catch((err) => console.log('Connection failed:', err))
+
+// Routes imports
+const users = require('./routes/users')
+const products = require('./routes/products')
+const auth = require('./routes/auth')
+const posts = require('./routes/posts')
 
 // Middleware
+app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
-
 app.use((req, res, next) => {
   console.log(req.method, req.url, new Date())
   next()
 })
 
 // Routes
-app.use('/users', usersRouter)
-app.use('/products', productsRouter)
+app.use('/users', users)
+app.use('/products', products)
+app.use('/auth', auth)
+app.use('/posts', posts)
 
 app.get('/', (req, res) => {
-  res.send("Hello from Express!")
+  res.send('Hello from Express!')
 })
 
 // Error handler
@@ -609,11 +631,12 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" })
+  res.status(404).json({ error: 'Route not found' })
 })
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`)
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
 })
 ```
 
@@ -624,72 +647,114 @@ app.listen(process.env.PORT, () => {
 ```js
 const express = require('express')
 const router = express.Router()
-const User = require('../models/User.js')
-const bcrypt = require('bcrypt')
+const authMiddleware = require('../middleware/authMiddleware')
+const {
+  getAllUsers,
+  saveusers,
+  updateUser,
+  deleteUser,
+} = require('../controllers/userController')
 
-// GET all users
-router.get('/', async (req, res) => {
-  try {
-    const users = await User.find()
-    res.json(users)
-  } catch (err) {
-    res.status(400).json({ error: err.message })
-  }
-})
-
-// GET search users
-router.get('/search', (req, res) => {
-  console.log(req.query)
-  res.json(req.query)
-})
-
-// GET specific user
-router.get('/:id', (req, res) => {
-  res.json({ userId: req.params.id })
-})
-
-// POST create user
-router.post('/', async (req, res) => {
-  try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10)
-    const user = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: hashedPassword
-    })
-    await user.save()
-    res.status(201).json({ message: "User saved!", user })
-  } catch (err) {
-    res.status(400).json({ error: err.message })
-  }
-})
-
-// PUT update user
-router.put('/:id', async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    )
-    res.json({ message: "User updated!", user })
-  } catch (err) {
-    res.status(400).json({ error: err.message })
-  }
-})
-
-// DELETE user
-router.delete('/:id', async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id)
-    res.json({ message: "User deleted!", user })
-  } catch (err) {
-    res.status(400).json({ error: err.message })
-  }
-})
+router.get('/', authMiddleware, getAllUsers)
+router.post('/', saveusers)
+router.put('/:id', updateUser)
+router.delete('/:id', deleteUser)
 
 module.exports = router
 ```
+
+---
+
+## 25. Controllers + Middleware Organization
+
+Use controllers to keep route files small and focused on endpoints. Controllers hold the actual database logic.
+
+**routes/users.js:**
+```js
+const express = require('express')
+const router = express.Router()
+const authMiddleware = require('../middleware/authMiddleware')
+const { getAllUsers, saveusers } = require('../controllers/userController')
+
+router.get('/', authMiddleware, getAllUsers)
+router.post('/', saveusers)
+module.exports = router
+```
+
+**controllers/userController.js:**
+```js
+const User = require('../models/User')
+
+const getAllUsers = async (req, res) => {
+  const users = await User.find().select('-password')
+  res.json(users)
+}
+```
+
+This pattern helps with:
+- testing logic separately
+- reusing code across routes
+- keeping routes readable
+
+---
+
+## 26. Auth Route with JWT
+
+**routes/auth.js** handles login and registration.
+
+```js
+router.post('/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email })
+  const isMatch = await bcrypt.compare(req.body.password, user.password)
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+  res.json({ message: 'Login successful!', token })
+})
+```
+
+For registration, create a user, hash the password, save the user, and return a JWT token.
+
+**Why JWT?**
+- stateless authentication
+- token contains user identity
+- sent with each request in `Authorization: Bearer <token>`
+
+---
+
+## 27. Protected Routes with authMiddleware
+
+Use middleware to protect routes before the controller runs.
+
+```js
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization || ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader
+  if (!token) return res.status(401).json({ error: 'Access denied, no token!' })
+
+  req.user = jwt.verify(token, process.env.JWT_SECRET)
+  next()
+}
+```
+
+Then protect an endpoint:
+```js
+router.get('/', authMiddleware, getAllUsers)
+```
+
+This means only logged-in users can call the route.
+
+---
+
+## 28. Posts Route with Ownership Checks
+
+Your `posts` route protects create/update/delete with authentication.
+
+- `GET /posts` = public list of posts
+- `GET /posts/:id` = public single post
+- `POST /posts` = protected, creates a post with `author: req.user.id`
+- `PUT /posts/:id` = protected and verifies the post author before editing
+- `DELETE /posts/:id` = protected and verifies ownership before deleting
+
+This is how you enforce that only the owner can change their own post.
 
 ---
 
@@ -713,8 +778,9 @@ module.exports = router
 ✅ User Schema & Model
 ✅ Full CRUD (Create, Read, Update, Delete)
 ✅ Password hashing with bcrypt
-⏳ Authentication (JWT + login route)
-⏳ Protected routes (auth middleware)
+✅ Authentication (JWT + login route)
+✅ Protected routes (auth middleware)
+✅ Posts with ownership checks
 ⏳ Full-stack with React
 ⏳ Deployment
 ```
@@ -723,10 +789,10 @@ module.exports = router
 
 ## What's Next (Session 4)
 
-- Login route (compare password with bcrypt)
-- JWT tokens (what they are and how they work)
-- Auth middleware (protecting routes)
-- Only logged in users can access certain routes
+- Improve login flow with better error handling
+- Add refresh tokens or session expiration
+- Connect backend to frontend forms and protected pages
+- Deploy backend and frontend together
 
 ---
 
