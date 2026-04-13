@@ -709,16 +709,14 @@ router.post('/login', async (req, res) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
   res.json({ message: 'Login successful!', token })
 })
-```
-
-For registration, create a user, hash the password, save the user, and return a JWT token.
+ 
 
 **Why JWT?**
 - stateless authentication
 - token contains user identity
 - sent with each request in `Authorization: Bearer <token>`
 
----
+ 
 
 ## 27. Protected Routes with authMiddleware
 
