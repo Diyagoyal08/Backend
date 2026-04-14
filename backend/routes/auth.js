@@ -23,7 +23,11 @@ const jwt = require('jsonwebtoken')
     }
 
     // Step 5 - create JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+    const token = jwt.sign(
+      { id: user._id }, 
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    )
 
     res.json({ message: 'Login successful!', token })
 
@@ -48,7 +52,11 @@ router.post('/register', async (req, res) => {
 
     await user.save()
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    )
     res.status(201).json({ message: 'Registration successful!', token })
   } catch (err) {
     res.status(400).json({ error: err.message })

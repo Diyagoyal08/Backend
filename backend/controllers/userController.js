@@ -13,44 +13,64 @@ const getAllUsers = async (req, res) => {
 
 
  const saveusers = async (req, res) => { // save user
-  const hashedPassword = await bcrypt.hash(req.body.password, 10)
-
   try {
+    const existingUser = await User.findOne({ email: req.body.email })
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already registered.' })
+    }
+
+    const hashedPassword = await bcrypt.hash(req.body.password, 10)
     const user = new User({
       name: req.body.name,
       email: req.body.email,
-      password: hashedPassword 
+      password: hashedPassword,
     })
-    
+
     await user.save()
-    res.status(201).json({ message: "User saved!", user })
+    res.status(201).json({ message: 'User saved!', user })
   } catch (err) {
     res.status(400).json({ error: err.message })
   }
 }
 
- 
- 
+const deleteUser = async (req, res) => { // delete user
+  try {
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({ error: 'Unauthorized to delete this account.' })
+    }
 
-const deleteUser =  async (req, res) => { // delete user
-  try{
-    const user =  await User.findByIdAndDelete(req.params.id)
-    console.log("deleted" , user)
-    res.json({ message: "User deleted!", user })
-  }catch (err) {
-    res.status(400).json({error: err.message})
+    const user = await User.findByIdAndDelete(req.params.id)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' })
+    }
+
+    console.log('deleted', user)
+    res.json({ message: 'User deleted!', user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
   }
 }
 
+const updateUser = async (req, res) => { // update user
+  try {
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({ error: 'Unauthorized to update this account.' })
+    }
 
- const updateUser =  async (req, res) => { // update user
-  try{
-    const user =  await User.findByIdAndUpdate(req.params.id , req.body  , { new: true })
-    
-    console.log("Updated" , user)
-    res.json({ message: "User updated!", user })
-  }catch (err) {
-    res.status(400).json({error: err.message})
+    const updates = { ...req.body }
+    if (updates.password) {
+      updates.password = await bcrypt.hash(updates.password, 10)
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true })
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' })
+    }
+
+    console.log('Updated', user)
+    res.json({ message: 'User updated!', user })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
   }
 }
 

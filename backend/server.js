@@ -4,13 +4,18 @@ const mongoose = require('mongoose')
 const cors = require('cors')  // 👈 import at top with others
 const app = express()
 
+if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
+  console.error('Missing required environment variables: MONGO_URI and/or JWT_SECRET')
+  process.exit(1)
+}
+
 // Connect MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected!'))
-  .catch((err) => console.log('Connection failed:', err))
+  .catch((err) => {
+    console.error('MongoDB connection failed:', err)
+    process.exit(1)
+  })
 
 // Routes imports
 const users = require('./routes/users')
@@ -19,7 +24,8 @@ const auth = require('./routes/auth')
 const posts = require('./routes/posts')
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }))
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173'
+app.use(cors({ origin: allowedOrigin }))
 app.use(express.json())
 app.use((req, res, next) => {
   console.log(req.method, req.url, new Date())

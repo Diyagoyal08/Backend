@@ -5,7 +5,7 @@ const { getAllUsers, saveusers, updateUser, deleteUser } = require('../controlle
 
 router.get('/', authMiddleware, getAllUsers)
 router.post('/', saveusers)
-router.put('/:id', updateUser)
-router.delete('/:id', deleteUser)
+router.put('/:id', authMiddleware, updateUser)
+router.delete('/:id', authMiddleware, deleteUser)
 
 module.exports = router
