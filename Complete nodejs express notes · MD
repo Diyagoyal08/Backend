@@ -704,18 +704,6 @@ This pattern helps with:
 
 ```js
 router.post('/login', async (req, res) => {
-  const user = await User.findOne({ email: req.body.email })
-  const isMatch = await bcrypt.compare(req.body.password, user.password)
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
-  res.json({ message: 'Login successful!', token })
-})
- 
-
-**Why JWT?**
-- stateless authentication
-- token contains user identity
-- sent with each request in `Authorization: Bearer <token>`
-
  
 
 ## 27. Protected Routes with authMiddleware
