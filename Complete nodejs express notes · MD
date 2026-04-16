@@ -769,8 +769,7 @@ This is how you enforce that only the owner can change their own post.
 ✅ Posts with ownership checks
 ⏳ Full-stack with React
 ⏳ Deployment
-```
-
+ 
 ---
 
 ## What's Next (Session 4)
@@ -788,6 +787,4 @@ This is how you enforce that only the owner can change their own post.
 - Never commit .env to GitHub — add it to .gitignore
 - Never share real credentials in notes or chat — use placeholders
 
----
-
-*You're more than halfway to full-stack — keep going! 💪*
+ 
